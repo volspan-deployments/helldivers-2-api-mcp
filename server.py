@@ -11,166 +11,157 @@ from typing import Optional
 mcp = FastMCP("Helldivers 2 Community API")
 
 BASE_URL = "https://api.helldivers2.dev"
-CLIENT_NAME = "helldivers2-fastmcp-server"
+DEFAULT_HEADERS = {
+    "X-Super-Client": "fastmcp-helldivers2-server",
+    "Accept": "application/json"
+}
 
 
-def get_headers(language: str = "en-US") -> dict:
-    return {
-        "Accept-Language": language,
-        "X-Super-Client": CLIENT_NAME,
-        "Accept": "application/json",
-    }
+async def make_request(path: str, language: str = "en-US", params: Optional[dict] = None) -> dict:
+    """Helper to make requests to the Helldivers 2 API."""
+    headers = {**DEFAULT_HEADERS, "Accept-Language": language}
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.get(
+            f"{BASE_URL}{path}",
+            headers=headers,
+            params=params
+        )
+        response.raise_for_status()
+        return response.json()
 
 
 @mcp.tool()
 async def get_war_status(language: str = "en-US") -> dict:
-    """Retrieve the current war status and season information for Helldivers 2.
-    Use this to get the overall state of the ongoing galactic war, including
-    active war season, time info, and global statistics. Good starting point
-    for any war-related query."""
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            f"{BASE_URL}/api/v1/war",
-            headers=get_headers(language),
-            timeout=15.0,
-        )
-        response.raise_for_status()
-        return response.json()
+    """Retrieve the current overall war status in Helldivers 2, including active campaigns,
+    faction standings, and the global war effort progress. Use this when a user wants to know
+    the current state of the galactic war."""
+    try:
+        data = await make_request("/api/v1/war", language=language)
+        return {"success": True, "data": data}
+    except httpx.HTTPStatusError as e:
+        return {"success": False, "error": f"HTTP {e.response.status_code}: {e.response.text}"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 
 @mcp.tool()
 async def get_planets(
     planet_index: Optional[int] = None,
-    language: str = "en-US",
+    language: str = "en-US"
 ) -> dict:
-    """Retrieve information about all planets or a specific planet in the
-    Helldivers 2 galaxy. Use this to get planet details such as faction control,
-    liberation percentage, player count, health, and planetary hazards. Use when
-    users ask about specific planets or want to find planets under attack."""
-    async with httpx.AsyncClient() as client:
+    """Retrieve information about all planets or a specific planet in Helldivers 2, including
+    faction control, liberation percentage, player count, and active events. Use this when a user
+    wants to know about planet details or which planets are under attack."""
+    try:
         if planet_index is not None:
-            url = f"{BASE_URL}/api/v1/planets/{planet_index}"
+            path = f"/api/v1/planets/{planet_index}"
         else:
-            url = f"{BASE_URL}/api/v1/planets"
-        response = await client.get(
-            url,
-            headers=get_headers(language),
-            timeout=15.0,
-        )
-        response.raise_for_status()
-        return response.json()
+            path = "/api/v1/planets"
+        data = await make_request(path, language=language)
+        return {"success": True, "data": data}
+    except httpx.HTTPStatusError as e:
+        return {"success": False, "error": f"HTTP {e.response.status_code}: {e.response.text}"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 
 @mcp.tool()
 async def get_campaigns(language: str = "en-US") -> dict:
-    """Retrieve all active campaigns currently happening in the Helldivers 2
-    galactic war. Use this to find out which planets have active defense or
-    liberation campaigns, including campaign type, progress, and involved
-    factions. Use when users want to know where the current major battles are."""
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            f"{BASE_URL}/api/v1/campaigns",
-            headers=get_headers(language),
-            timeout=15.0,
-        )
-        response.raise_for_status()
-        return response.json()
-
-
-@mcp.tool()
-async def get_assignments(language: str = "en-US") -> dict:
-    """Retrieve current major orders and assignments in Helldivers 2. Use this
-    when users want to know what the current major order is, its objectives,
-    rewards, and deadline. This is the in-game 'Major Order' information that
-    guides the community's collective effort."""
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            f"{BASE_URL}/api/v1/assignments",
-            headers=get_headers(language),
-            timeout=15.0,
-        )
-        response.raise_for_status()
-        return response.json()
+    """Retrieve the list of active campaigns (major orders and ongoing planetary assaults) in
+    Helldivers 2. Use this to find out what missions or objectives the community is currently
+    focused on."""
+    try:
+        data = await make_request("/api/v1/campaigns", language=language)
+        return {"success": True, "data": data}
+    except httpx.HTTPStatusError as e:
+        return {"success": False, "error": f"HTTP {e.response.status_code}: {e.response.text}"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 
 @mcp.tool()
 async def get_dispatches(language: str = "en-US") -> dict:
-    """Retrieve recent dispatches (in-game news and messages from Super Earth
-    High Command) from Helldivers 2. Use this to get the latest lore-flavored
-    news updates, announcements, and narrative messages broadcast to players.
-    Useful when users want the latest in-game story updates."""
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            f"{BASE_URL}/api/v1/dispatches",
-            headers=get_headers(language),
-            timeout=15.0,
-        )
-        response.raise_for_status()
-        return response.json()
+    """Retrieve the latest dispatches (in-game news and announcements from Super Earth High Command)
+    in Helldivers 2. Use this when a user wants to read recent in-game lore updates or official
+    war communications."""
+    try:
+        data = await make_request("/api/v1/dispatches", language=language)
+        return {"success": True, "data": data}
+    except httpx.HTTPStatusError as e:
+        return {"success": False, "error": f"HTTP {e.response.status_code}: {e.response.text}"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 
 @mcp.tool()
-async def get_steam_news(count: int = 10) -> dict:
-    """Retrieve the latest Steam news and patch notes for Helldivers 2. Use this
-    when users ask about recent game updates, patch notes, events, or
-    announcements posted by the developers on Steam. Good for staying up to
-    date with game changes."""
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            f"{BASE_URL}/api/v1/steam",
-            params={"count": count},
-            headers=get_headers(),
-            timeout=15.0,
-        )
-        response.raise_for_status()
-        return response.json()
+async def get_assignments(language: str = "en-US") -> dict:
+    """Retrieve active major orders and assignments given to Helldivers by Super Earth. Use this
+    when a user wants to know what the current major order is, its objectives, rewards, and
+    deadline."""
+    try:
+        data = await make_request("/api/v1/assignments", language=language)
+        return {"success": True, "data": data}
+    except httpx.HTTPStatusError as e:
+        return {"success": False, "error": f"HTTP {e.response.status_code}: {e.response.text}"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@mcp.tool()
+async def get_steam_news(count: int = 5) -> dict:
+    """Retrieve the latest Steam news and patch notes for Helldivers 2. Use this when a user
+    wants to know about recent game updates, patches, or official announcements from the
+    developers."""
+    try:
+        data = await make_request("/api/v1/steam", params={"count": count})
+        return {"success": True, "data": data}
+    except httpx.HTTPStatusError as e:
+        return {"success": False, "error": f"HTTP {e.response.status_code}: {e.response.text}"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 
 @mcp.tool()
 async def get_war_history(
     planet_index: Optional[int] = None,
-    language: str = "en-US",
+    language: str = "en-US"
 ) -> dict:
-    """Retrieve historical snapshot or summary data about past events in the
-    Helldivers 2 galactic war. Use this to look up information about previously
-    liberated or lost planets, past campaigns, and war history. Useful when
-    users want context about how the war has progressed over time."""
-    async with httpx.AsyncClient() as client:
+    """Retrieve historical war snapshots and statistics for Helldivers 2, including past planet
+    liberation outcomes and war effort data. Use this when a user wants to look back at previous
+    war events or track how the galactic war has progressed over time."""
+    try:
         if planet_index is not None:
-            url = f"{BASE_URL}/api/v1/planets/{planet_index}/history"
+            path = f"/api/v1/planets/{planet_index}/history"
         else:
-            url = f"{BASE_URL}/api/v1/war/history"
-        response = await client.get(
-            url,
-            headers=get_headers(language),
-            timeout=15.0,
-        )
-        response.raise_for_status()
-        return response.json()
+            path = "/api/v1/history"
+        data = await make_request(path, language=language)
+        return {"success": True, "data": data}
+    except httpx.HTTPStatusError as e:
+        return {"success": False, "error": f"HTTP {e.response.status_code}: {e.response.text}"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 
 @mcp.tool()
 async def get_raw_data(
     endpoint: str,
-    language: str = "en-US",
+    language: str = "en-US"
 ) -> dict:
-    """Retrieve raw unprocessed data directly from the ArrowHead API endpoints
-    via the community wrapper's /raw endpoints. Use this when you need low-level
-    or unformatted game data not covered by other endpoints, or when debugging
-    discrepancies between community and official data. Prefer this over directly
-    calling ArrowHead's API to reduce load on their servers.
-
-    The 'endpoint' parameter should be the raw endpoint path to call
-    (e.g. 'WarSeason/801/Status', 'WarSeason/801/WarInfo')."""
-    endpoint = endpoint.lstrip("/")
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            f"{BASE_URL}/raw/{endpoint}",
-            headers=get_headers(language),
-            timeout=15.0,
-        )
-        response.raise_for_status()
-        return response.json()
+    """Retrieve raw data from the ArrowHead API through the community wrapper's /raw endpoints.
+    Use this when you need lower-level or unprocessed game data not available in the standard
+    endpoints, such as raw war info, planet stats, or faction data.
+    The endpoint parameter should be the raw path (e.g. 'WarSeason/801/Status',
+    'WarSeason/801/WarInfo'). Do not include a leading slash."""
+    try:
+        # Strip leading slash if user accidentally included one
+        clean_endpoint = endpoint.lstrip("/")
+        path = f"/raw/{clean_endpoint}"
+        data = await make_request(path, language=language)
+        return {"success": True, "data": data}
+    except httpx.HTTPStatusError as e:
+        return {"success": False, "error": f"HTTP {e.response.status_code}: {e.response.text}"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 
 
