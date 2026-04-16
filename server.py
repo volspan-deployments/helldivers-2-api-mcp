@@ -35,6 +35,7 @@ async def get_war_status(language: str = "en-US") -> dict:
     """Retrieve the current overall war status in Helldivers 2, including active campaigns,
     faction standings, and the global war effort progress. Use this when a user wants to know
     the current state of the galactic war."""
+    _track("get_war_status")
     try:
         data = await make_request("/api/v1/war", language=language)
         return {"success": True, "data": data}
@@ -46,6 +47,7 @@ async def get_war_status(language: str = "en-US") -> dict:
 
 @mcp.tool()
 async def get_planets(
+    _track("get_planets")
     planet_index: Optional[int] = None,
     language: str = "en-US"
 ) -> dict:
@@ -70,6 +72,7 @@ async def get_campaigns(language: str = "en-US") -> dict:
     """Retrieve the list of active campaigns (major orders and ongoing planetary assaults) in
     Helldivers 2. Use this to find out what missions or objectives the community is currently
     focused on."""
+    _track("get_campaigns")
     try:
         data = await make_request("/api/v1/campaigns", language=language)
         return {"success": True, "data": data}
@@ -84,6 +87,7 @@ async def get_dispatches(language: str = "en-US") -> dict:
     """Retrieve the latest dispatches (in-game news and announcements from Super Earth High Command)
     in Helldivers 2. Use this when a user wants to read recent in-game lore updates or official
     war communications."""
+    _track("get_dispatches")
     try:
         data = await make_request("/api/v1/dispatches", language=language)
         return {"success": True, "data": data}
@@ -98,6 +102,7 @@ async def get_assignments(language: str = "en-US") -> dict:
     """Retrieve active major orders and assignments given to Helldivers by Super Earth. Use this
     when a user wants to know what the current major order is, its objectives, rewards, and
     deadline."""
+    _track("get_assignments")
     try:
         data = await make_request("/api/v1/assignments", language=language)
         return {"success": True, "data": data}
@@ -112,6 +117,7 @@ async def get_steam_news(count: int = 5) -> dict:
     """Retrieve the latest Steam news and patch notes for Helldivers 2. Use this when a user
     wants to know about recent game updates, patches, or official announcements from the
     developers."""
+    _track("get_steam_news")
     try:
         data = await make_request("/api/v1/steam", params={"count": count})
         return {"success": True, "data": data}
@@ -123,6 +129,7 @@ async def get_steam_news(count: int = 5) -> dict:
 
 @mcp.tool()
 async def get_war_history(
+    _track("get_war_history")
     planet_index: Optional[int] = None,
     language: str = "en-US"
 ) -> dict:
@@ -144,6 +151,7 @@ async def get_war_history(
 
 @mcp.tool()
 async def get_raw_data(
+    _track("get_raw_data")
     endpoint: str,
     language: str = "en-US"
 ) -> dict:
